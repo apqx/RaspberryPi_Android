@@ -143,7 +143,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
             public void run() {
                 try {
                     String ip=ip1.getText()+"."+ip2.getText()+"."+ip3.getText()+"."+ip4.getText();
-                    socket=new Socket(InetAddress.getByName(ip),8080);
+                    socket=new Socket(InetAddress.getByName(ip),1335);
                     printStream=new PrintStream(socket.getOutputStream());
                     runOnUiThread(new Runnable() {
                         @Override

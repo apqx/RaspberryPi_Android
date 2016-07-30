@@ -1,6 +1,7 @@
 package me.apqx.raspberrypi;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
@@ -36,6 +37,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
     private boolean downPressed;
     private boolean rightPressed;
     private boolean leftPressed;
+    private IPSQLite ipsqLite;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,6 +49,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
         connect=(Button)findViewById(R.id.connect);
         disConnect=(Button)findViewById(R.id.disConnect);
         shutdown=(Button)findViewById(R.id.shutdown);
+        ipsqLite=new IPSQLite();
         ip1=(EditText)findViewById(R.id.ip_1);
         ip2=(EditText)findViewById(R.id.ip_2);
         ip3=(EditText)findViewById(R.id.ip_3);
@@ -56,6 +59,11 @@ public class MainActivity extends Activity implements View.OnClickListener{
         back=(Button)findViewById(R.id.back);
         right=(Button)findViewById(R.id.turnRight);
         left=(Button)findViewById(R.id.turnLeft);
+        int[] ip=ipsqLite.getIP();
+        ip1.setText(ip[0]+"");
+        ip2.setText(ip[1]+"");
+        ip3.setText(ip[2]+"");
+        ip4.setText(ip[3]+"");
     }
     private void setListener(){
         connect.setOnClickListener(this);
@@ -124,6 +132,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
         switch (v.getId()){
             case R.id.connect:
                 startCommunicate();
+                ipsqLite.saveIP(new int[]{Integer.parseInt(ip1.getText().toString()),Integer.parseInt(ip2.getText().toString()),Integer.parseInt(ip3.getText().toString()),Integer.parseInt(ip4.getText().toString())});
                 break;
             case R.id.disConnect:
                 sendText(RaspberryAction.EXIT);
@@ -167,8 +176,12 @@ public class MainActivity extends Activity implements View.OnClickListener{
     private void sendText(String string){
         if (socket!=null&&socket.isConnected()){
             printStream.println(string);
+        }else {
+            imageView.setBackgroundColor(Color.RED);
+            Toast.makeText(this,"No Connection",Toast.LENGTH_SHORT).show();
         }
     }
+    //检查按键冲突
     private void checkAndDo(){
         if (upPressed){
             sendText(RaspberryAction.FORWARD);
@@ -206,5 +219,6 @@ public class MainActivity extends Activity implements View.OnClickListener{
                 e.printStackTrace();
             }
         }
+        ipsqLite.close();
     }
 }

@@ -29,7 +29,6 @@ public class MySQLHelper extends SQLiteOpenHelper {
         contentValues.put("ip3",1);
         contentValues.put("ip4",240);
         db.insert("raspberry",null,contentValues);
-        Log.d("apqx","初始化数据");
     }
 
     @Override

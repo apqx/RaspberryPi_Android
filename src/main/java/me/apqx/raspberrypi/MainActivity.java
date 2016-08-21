@@ -6,19 +6,30 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
+import me.apqx.raspberrypi.View.ControllerView;
+import me.apqx.raspberrypi.View.OnControllerListener;
+
 /**
  * Created by chang on 2016/6/30.
  */
 public class MainActivity extends Activity implements View.OnClickListener{
+    private ControllerView controllerView;
+    protected OnControllerListener controllerListener;
+    private UseSensor useSensor;
+    private ToggleButton toggleSensor;
+    protected TextView sensorData;
     private Button connect;
     private Button disConnect;
     private Button shutdown;
@@ -27,16 +38,8 @@ public class MainActivity extends Activity implements View.OnClickListener{
     private EditText ip3;
     private EditText ip4;
     private ImageView imageView;
-    private Button forward;
-    private Button back;
-    private Button right;
-    private Button left;
     private PrintStream printStream;
     private Socket socket;
-    private boolean upPressed;
-    private boolean downPressed;
-    private boolean rightPressed;
-    private boolean leftPressed;
     private IPSQLite ipsqLite;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,10 +58,11 @@ public class MainActivity extends Activity implements View.OnClickListener{
         ip3=(EditText)findViewById(R.id.ip_3);
         ip4=(EditText)findViewById(R.id.ip_4);
         imageView=(ImageView)findViewById(R.id.imageView);
-        forward=(Button)findViewById(R.id.forward);
-        back=(Button)findViewById(R.id.back);
-        right=(Button)findViewById(R.id.turnRight);
-        left=(Button)findViewById(R.id.turnLeft);
+        controllerView=(ControllerView)findViewById(R.id.controllerView);
+        toggleSensor=(ToggleButton)findViewById(R.id.toggleSensor);
+        sensorData=(TextView)findViewById(R.id.sensorData);
+        controllerListener=new ControllerListener();
+        useSensor=new UseSensor(controllerListener);
         int[] ip=ipsqLite.getIP();
         ip1.setText(ip[0]+"");
         ip2.setText(ip[1]+"");
@@ -69,60 +73,15 @@ public class MainActivity extends Activity implements View.OnClickListener{
         connect.setOnClickListener(this);
         disConnect.setOnClickListener(this);
         shutdown.setOnClickListener(this);
-        forward.setOnTouchListener(new View.OnTouchListener() {
+        controllerView.setOnControllerListener(controllerListener);
+        toggleSensor.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getActionMasked()==MotionEvent.ACTION_DOWN){
-                    upPressed=true;
-                    sendText(RaspberryAction.FORWARD);
-                }else if (event.getActionMasked()==MotionEvent.ACTION_UP){
-                    upPressed=false;
-                    sendText(RaspberryAction.STOP);
-                    checkAndDo();
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked){
+                    useSensor.start(sensorData);
+                }else {
+                    useSensor.stop();
                 }
-                return false;
-            }
-        });
-        back.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getActionMasked()==MotionEvent.ACTION_DOWN){
-                    downPressed=true;
-                    sendText(RaspberryAction.BACK);
-                }else if (event.getActionMasked()==MotionEvent.ACTION_UP){
-                    downPressed=false;
-                    sendText(RaspberryAction.STOP);
-                    checkAndDo();
-                }
-                return false;
-            }
-        });
-        left.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getActionMasked()==MotionEvent.ACTION_DOWN){
-                    leftPressed=true;
-                    sendText(RaspberryAction.TURN_LEFT);
-                }else if (event.getActionMasked()==MotionEvent.ACTION_UP){
-                    leftPressed=false;
-                    sendText(RaspberryAction.STOP);
-                    checkAndDo();
-                }
-                return false;
-            }
-        });
-        right.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getActionMasked()==MotionEvent.ACTION_DOWN){
-                    rightPressed=true;
-                    sendText(RaspberryAction.TURN_RIGHT);
-                }else if (event.getActionMasked()==MotionEvent.ACTION_UP){
-                    rightPressed=false;
-                    sendText(RaspberryAction.STOP);
-                    checkAndDo();
-                }
-                return false;
             }
         });
     }
@@ -173,26 +132,15 @@ public class MainActivity extends Activity implements View.OnClickListener{
             }
         }).start();
     }
-    private void sendText(String string){
+    protected void sendText(String string){
         if (socket!=null&&socket.isConnected()){
             printStream.println(string);
         }else {
             imageView.setBackgroundColor(Color.RED);
-            Toast.makeText(this,"No Connection",Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this,"No Connection",Toast.LENGTH_SHORT).show();
         }
     }
-    //检查按键冲突
-    private void checkAndDo(){
-        if (upPressed){
-            sendText(RaspberryAction.FORWARD);
-        }else if (downPressed){
-            sendText(RaspberryAction.BACK);
-        }else if (rightPressed){
-            sendText(RaspberryAction.TURN_RIGHT);
-        }else if (leftPressed){
-            sendText(RaspberryAction.TURN_LEFT);
-        }
-    }
+
     private void close(){
         if (socket!=null){
             try {
@@ -220,5 +168,31 @@ public class MainActivity extends Activity implements View.OnClickListener{
             }
         }
         ipsqLite.close();
+    }
+    class ControllerListener implements OnControllerListener{
+        @Override
+        public void up() {
+            sendText(RaspberryAction.FORWARD);
+        }
+
+        @Override
+        public void down() {
+            sendText(RaspberryAction.BACK);
+        }
+
+        @Override
+        public void right() {
+            sendText(RaspberryAction.TURN_RIGHT);
+        }
+
+        @Override
+        public void left() {
+            sendText(RaspberryAction.TURN_LEFT);
+        }
+
+        @Override
+        public void stop() {
+            sendText(RaspberryAction.STOP);
+        }
     }
 }

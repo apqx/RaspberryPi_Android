@@ -26,8 +26,8 @@ public class MySQLHelper extends SQLiteOpenHelper {
         ContentValues contentValues=new ContentValues();
         contentValues.put("ip1",192);
         contentValues.put("ip2",168);
-        contentValues.put("ip3",1);
-        contentValues.put("ip4",240);
+        contentValues.put("ip3",0);
+        contentValues.put("ip4",1);
         db.insert("raspberry",null,contentValues);
     }
 

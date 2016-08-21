@@ -62,7 +62,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
         toggleSensor=(ToggleButton)findViewById(R.id.toggleSensor);
         sensorData=(TextView)findViewById(R.id.sensorData);
         controllerListener=new ControllerListener();
-        useSensor=new UseSensor(controllerListener);
+        useSensor=new UseSensor(controllerView);
         int[] ip=ipsqLite.getIP();
         ip1.setText(ip[0]+"");
         ip2.setText(ip[1]+"");

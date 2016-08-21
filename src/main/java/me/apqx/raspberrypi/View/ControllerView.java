@@ -20,13 +20,6 @@ public class ControllerView extends View {
     private Paint right=new Paint();
     private Paint backGround=new Paint();
     private Paint centerPoint=new Paint();
-    //中心控制圆圆心坐标偏移量
-    private int offsetX;
-    private int offsetY;
-    private int lastX;
-    private int lastY;
-    private int currentX;
-    private int currentY;
     //中心控制点圆心坐标
     private int x;
     private int y;
@@ -171,37 +164,10 @@ public class ControllerView extends View {
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()){
             case MotionEvent.ACTION_DOWN:
-                lastX=(int)event.getX();
-                lastY=(int)event.getY();
-                if (getDistance(getMeasuredWidth()/2,getMeasuredHeight()/2,lastX,lastY)<=centerLength){
-                    //如果点击在圈内，中心控制圆应该移动到点击位置
-                    x=lastX;
-                    y=lastY;
-                    invalidate();
-                }else {
-                    //如果点击在圈外，控制圆移动到与圈接触的相应位置，并触发在相应区域内的点击操作，考虑按键冲突
-                    setPointOnCircle(centerX,centerY,lastX,lastY);
-                    invalidate();
-                }
-                isInit=false;
+                setPoint((int)event.getX(),(int)event.getY());
                 break;
             case MotionEvent.ACTION_MOVE:
-                currentX=(int)event.getX();
-                currentY=(int)event.getY();
-                if (getDistance(centerX,centerY,currentX,currentY)<=centerLength){
-                    //如果移动在圈内，控制圆应随手指移动
-                    x=currentX;
-                    y=currentY;
-                    invalidate();
-                    if (listener!=null&&whichIsOn!=STOP){
-                        listener.stop();
-                        whichIsOn=STOP;
-                    }
-                }else {
-                    //如果移动在圈外，控制圆应随手指移动，但是不能出圈
-                    setPointOnCircle(centerX,centerY,currentX,currentY);
-                    invalidate();
-                }
+                setPoint((int)event.getX(),(int)event.getY());
                 break;
             case MotionEvent.ACTION_UP:
                 x=centerX;
@@ -328,5 +294,28 @@ public class ControllerView extends View {
     public void setOnControllerListener(OnControllerListener listener){
         this.listener=listener;
     }
-
+    //对外提供模拟设置触摸点方法
+    public void setPoint(int setX,int setY){
+        isInit=false;
+        if (getDistance(centerX,centerY,setX,setY)<=centerLength){
+            //如果点在圈内，控制圆应随手指移动
+            x=setX;
+            y=setY;
+            if (listener!=null&&whichIsOn!=STOP){
+                listener.stop();
+                whichIsOn=STOP;
+            }
+        }else {
+            //如果点在圈外，控制圆应随手指移动，但是不能出圈
+            setPointOnCircle(centerX,centerY,setX,setY);
+        }
+        invalidate();
+    }
+    //对外提供View中心坐标
+    public int getCenterX(){
+        return centerX;
+    }
+    public int getCenterY(){
+        return centerY;
+    }
 }

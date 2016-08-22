@@ -1,4 +1,4 @@
-package me.apqx.raspberrypi.View;
+package me.apqx.raspberrypi.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -6,11 +6,10 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-/**
+/**为控制树莓派而写的自定义View，支持点击和滑动
  * Created by chang on 2016/8/19.
  */
 public class ControllerView extends View {
@@ -20,6 +19,8 @@ public class ControllerView extends View {
     private Paint right=new Paint();
     private Paint backGround=new Paint();
     private Paint centerPoint=new Paint();
+    private Paint line;
+    private Path arrow;
     //中心控制点圆心坐标
     private int x;
     private int y;
@@ -47,7 +48,7 @@ public class ControllerView extends View {
     }
 
     private int measure(int measureSpec){
-        int result=0;
+        int result;
         int specMod=MeasureSpec.getMode(measureSpec);
         int specSize=MeasureSpec.getSize(measureSpec);
         if (specMod==MeasureSpec.EXACTLY){
@@ -100,7 +101,7 @@ public class ControllerView extends View {
         canvas.drawRoundRect(-length/2,-length/2,length/2,length/2,roundRectRadius,roundRectRadius,backGround);
 
         //画四个指示方向的箭头
-        Path arrow=new Path();
+        arrow=new Path();
         if (whichIsOn==0||whichIsOn==STOP){
         up.setColor(Color.parseColor("#f5f5f5"));
         right.setColor(Color.parseColor("#f5f5f5"));
@@ -142,7 +143,7 @@ public class ControllerView extends View {
         canvas.restore();
 
         //画控制圆中心的运动边界圆
-        Paint line=new Paint();
+        line=new Paint();
         line.setStyle(Paint.Style.STROKE);
         line.setColor(Color.WHITE);
         line.setAntiAlias(true);
@@ -317,5 +318,21 @@ public class ControllerView extends View {
     }
     public int getCenterY(){
         return centerY;
+    }
+    //对外提供设置中心控制圆特殊位置的方法
+    public void setUp(){
+        setPoint(centerX,centerY-centerLength-10);
+    }
+    public void setDown(){
+        setPoint(centerX,centerY+centerLength+10);
+    }
+    public void setLeft(){
+        setPoint(centerX-centerLength-10,centerY);
+    }
+    public void setRight(){
+        setPoint(centerX+centerLength+10,centerY);
+    }
+    public void setCenter(){
+        setPoint(centerX,centerY);
     }
 }

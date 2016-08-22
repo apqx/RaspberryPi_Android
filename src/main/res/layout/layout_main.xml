@@ -9,6 +9,7 @@
         android:layout_marginRight="40dp">
         <EditText
             android:id="@+id/ip_1"
+            android:hint="@string/ip"
             android:layout_width="30dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -19,9 +20,10 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="."/>
+            android:text="@string/point"/>
         <EditText
             android:id="@+id/ip_2"
+            android:hint="@string/ip"
             android:layout_width="30dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -32,9 +34,10 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="."/>
+            android:text="@string/point"/>
         <EditText
             android:id="@+id/ip_3"
+            android:hint="@string/ip"
             android:layout_width="30dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -45,9 +48,10 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="."/>
+            android:text="@string/point"/>
         <EditText
             android:id="@+id/ip_4"
+            android:hint="@string/ip"
             android:layout_width="30dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -60,31 +64,36 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <Button
+            style="?android:attr/button"
             android:id="@+id/connect"
             android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:text="CONNECT"
+            android:text="@string/connect"
             android:layout_weight="1"/>
         <Button
+            style="?android:attr/button"
             android:id="@+id/shutdown"
             android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:text="SHUTDOWN"
+            android:text="@string/shutdown"
             android:layout_weight="1"/>
         <Button
+            style="?android:attr/button"
             android:id="@+id/disConnect"
             android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:text="DISCONNECT"
+            android:text="@string/disconnect"
             android:layout_weight="1"/>
     </LinearLayout>
     <ImageView
+        android:contentDescription="@string/connect_state"
         android:id="@+id/imageView"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:background="@color/disConnect"/>
     <ToggleButton
         android:id="@+id/toggleSensor"
+        style="?android:attr/buttonStyleToggle"
         android:checked="false"
         android:textOn="TURN OFF SENSOR"
         android:textOff="TURN ON SENSOR"
@@ -94,7 +103,7 @@
         android:id="@+id/sensorData"
         android:layout_width="match_parent"
         android:layout_height="70dp" />
-    <me.apqx.raspberrypi.View.ControllerView
+    <me.apqx.raspberrypi.view.ControllerView
         android:layout_gravity="center"
         android:id="@+id/controllerView"
         android:layout_width="250dp"

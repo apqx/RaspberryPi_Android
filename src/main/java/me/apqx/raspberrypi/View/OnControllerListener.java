@@ -1,4 +1,4 @@
-package me.apqx.raspberrypi.View;
+package me.apqx.raspberrypi.view;
 
 /**
  * Created by chang on 2016/8/21.

@@ -1,6 +1,5 @@
 package me.apqx.raspberrypi;
 
-import android.app.Activity;
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -8,12 +7,9 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.widget.TextView;
 
-import java.math.BigDecimal;
+import me.apqx.raspberrypi.view.ControllerView;
 
-import me.apqx.raspberrypi.View.ControllerView;
-import me.apqx.raspberrypi.View.OnControllerListener;
-
-/**
+/**为树莓派添加体感控制功能，使用加速度传感器判断手机姿态
  * Created by chang on 2016/8/21.
  */
 public class UseSensor {
@@ -50,7 +46,7 @@ public class UseSensor {
         if (sensorManager!=null){
             sensorManager.unregisterListener(listener,sensor);
             isFirst=true;
-            controllerView.setPoint(controllerView.getCenterX(),controllerView.getCenterY());
+            controllerView.setCenter();
         }
     }
     class SensorListener implements SensorEventListener{

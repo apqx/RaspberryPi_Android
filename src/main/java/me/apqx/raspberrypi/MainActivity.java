@@ -269,7 +269,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
             case KeyEvent.KEYCODE_BUTTON_R1:
                 //RB
                 break;
-
+            default:break;
         }
         return true;
     }

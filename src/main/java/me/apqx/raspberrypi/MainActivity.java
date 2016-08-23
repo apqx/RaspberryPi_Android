@@ -14,10 +14,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Calendar;
 
 import me.apqx.raspberrypi.view.ControllerView;
 import me.apqx.raspberrypi.view.OnControllerListener;
@@ -26,6 +29,8 @@ import me.apqx.raspberrypi.view.OnControllerListener;
  * Created by chang on 2016/6/30.
  */
 public class MainActivity extends Activity implements View.OnClickListener{
+    private boolean check;
+    private Thread checkThread;
     private ControllerView controllerView;
     protected OnControllerListener controllerListener;
     private UseSensor useSensor;
@@ -40,6 +45,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
     private EditText ip4;
     private ImageView imageView;
     private PrintStream printStream;
+    private BufferedReader bufferedReader;
     private Socket socket;
     private IPSQLite ipsqLite;
     private boolean upIsOn;
@@ -117,6 +123,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
                     String ip=ip1.getText()+"."+ip2.getText()+"."+ip3.getText()+"."+ip4.getText();
                     socket=new Socket(InetAddress.getByName(ip),1335);
                     printStream=new PrintStream(socket.getOutputStream());
+                    bufferedReader=new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -124,6 +131,18 @@ public class MainActivity extends Activity implements View.OnClickListener{
                             Toast.makeText(MainActivity.this,"Connected Successfull",Toast.LENGTH_SHORT).show();
                         }
                     });
+                    String string;
+                    checkConnection();
+                    while ((string=bufferedReader.readLine())!=null) {
+                        switch (string) {
+                            case RaspberryAction.CHECK:
+                                sendText(RaspberryAction.CHECK_BACK);
+                                break;
+                            case RaspberryAction.CHECK_BACK:
+                                check=true;
+                                break;
+                        }
+                    }
                 }catch (IOException e){
                     e.printStackTrace();
                     runOnUiThread(new Runnable() {
@@ -134,7 +153,8 @@ public class MainActivity extends Activity implements View.OnClickListener{
                     });
                 }
             }
-        }).start();
+        },"Thread-startCommunicate").start();
+
     }
     protected void sendText(String string){
         if (socket!=null&&socket.isConnected()){
@@ -147,11 +167,15 @@ public class MainActivity extends Activity implements View.OnClickListener{
 
     private void close(){
         imageView.setBackgroundColor(getResources().getColor(R.color.disConnect));
+        if (checkThread!=null){
+            checkThread.interrupt();
+        }
         if (socket!=null){
             try {
                 //延时0.1秒，防止命令未发送完成就关闭了连接
                 Thread.currentThread().sleep(100);
                 printStream.close();
+                bufferedReader.close();
                 socket.close();
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
@@ -165,12 +189,66 @@ public class MainActivity extends Activity implements View.OnClickListener{
         if (socket!=null){
             try {
                 printStream.close();
+                bufferedReader.close();
                 socket.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
         ipsqLite.close();
+    }
+    //检查连接是否中断
+    private void checkConnection(){
+        new Thread(new Runnable() {
+            private int time;
+            private int currentTime;
+            @Override
+            public void run() {
+                checkThread=Thread.currentThread();
+                try {
+                    while (true){
+                        check=false;
+                        sendText(RaspberryAction.CHECK);
+                        time=Calendar.getInstance().get(Calendar.SECOND);
+                        //Log.d("apqx","心跳");
+                        while (!check){
+                            currentTime=Calendar.getInstance().get(Calendar.SECOND);
+                            if (isOverTime(time,currentTime)){
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        close();
+                                    }
+                                });
+                                //Log.d("apqx","心跳线程退出");
+                                return;
+                            }
+                        }
+                        //Log.d("apqx","sleep");
+                        Thread.currentThread().sleep(5000);
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                    //Log.d("apqx","checkThread异常");
+                }
+            }
+        },"Thread-checkConnection").start();
+    }
+    //判断时间是否大于2秒
+    private boolean isOverTime(int time1,int time2){
+        if (time2>=time1&&time2<60){
+            if ((time2-time1)<2){
+                return false;
+            }else {
+                return true;
+            }
+        }else {
+            if ((time2+60-time1)<2){
+                return false;
+            }else {
+                return true;
+            }
+        }
     }
     class ControllerListener implements OnControllerListener{
         @Override

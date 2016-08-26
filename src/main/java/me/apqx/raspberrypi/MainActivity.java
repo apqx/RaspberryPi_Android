@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -20,19 +22,30 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.URI;
 import java.util.Calendar;
 
 import me.apqx.raspberrypi.view.ControllerView;
+import me.apqx.raspberrypi.view.MyWebView;
+import me.apqx.raspberrypi.view.MyWebViewListener;
 import me.apqx.raspberrypi.view.OnControllerListener;
+import me.apqx.raspberrypi.view.ServoView;
+import me.apqx.raspberrypi.view.ServoViewListener;
 
 /**树莓派控制主类
  * Created by chang on 2016/6/30.
  */
 public class MainActivity extends Activity implements View.OnClickListener{
+    private ControllerView handControllerView;
+    private OnControllerListener handControllerListener;
+    private ServoView servoView;
+    private ServoViewListener servoViewListener;
+    private MyWebView webView;
+    private WebViewListener webViewListener;
     private boolean check;
     private Thread checkThread;
-    private ControllerView controllerView;
-    protected OnControllerListener controllerListener;
+    private ControllerView directionControllerView;
+    protected OnControllerListener directionControllerListener;
     private UseSensor useSensor;
     private ToggleButton toggleSensor;
     protected TextView sensorData;
@@ -69,11 +82,22 @@ public class MainActivity extends Activity implements View.OnClickListener{
         ip3=(EditText)findViewById(R.id.ip_3);
         ip4=(EditText)findViewById(R.id.ip_4);
         imageView=(ImageView)findViewById(R.id.imageView);
-        controllerView=(ControllerView)findViewById(R.id.controllerView);
+        directionControllerView=(ControllerView)findViewById(R.id.drectionControllerView);
         toggleSensor=(ToggleButton)findViewById(R.id.toggleSensor);
         sensorData=(TextView)findViewById(R.id.sensorData);
-        controllerListener=new ControllerListener();
-        useSensor=new UseSensor(controllerView);
+        directionControllerListener=new DirectionControllerListener();
+        useSensor=new UseSensor(directionControllerView);
+        webView=(MyWebView)findViewById(R.id.webView);
+//        webSettings.setSupportZoom(true);
+//        webSettings.setLoadWithOverviewMode(true);
+//        webSettings.setUseWideViewPort(true);
+        //缩放百分之四百,和输出视频尺寸相配合使之占满屏幕
+        webView.setInitialScale(400);
+        webViewListener=new WebViewListener();
+        servoView=(ServoView)findViewById(R.id.servoView);
+        servoViewListener=new ServoListener();
+        handControllerView=(ControllerView)findViewById(R.id.handControllerView);
+        handControllerListener=new HandControllerListener();
         int[] ip=ipsqLite.getIP();
         ip1.setText(ip[0]+"");
         ip2.setText(ip[1]+"");
@@ -84,7 +108,8 @@ public class MainActivity extends Activity implements View.OnClickListener{
         connect.setOnClickListener(this);
         disConnect.setOnClickListener(this);
         shutdown.setOnClickListener(this);
-        controllerView.setOnControllerListener(controllerListener);
+        directionControllerView.setOnControllerListener(directionControllerListener);
+        webView.setOnMyWebViewListener(webViewListener);
         toggleSensor.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -95,7 +120,8 @@ public class MainActivity extends Activity implements View.OnClickListener{
                 }
             }
         });
-
+        servoView.setServoViewListener(servoViewListener);
+        handControllerView.setOnControllerListener(handControllerListener);
     }
 
     @Override
@@ -250,7 +276,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
             }
         }
     }
-    class ControllerListener implements OnControllerListener{
+    class DirectionControllerListener implements OnControllerListener{
         @Override
         public void up() {
             sendText(RaspberryAction.FORWARD);
@@ -276,6 +302,92 @@ public class MainActivity extends Activity implements View.OnClickListener{
             sendText(RaspberryAction.STOP);
         }
     }
+    class WebViewListener implements MyWebViewListener{
+        @Override
+        public void start() {
+            //开始使用摄像头
+            sendText(RaspberryAction.CAMERA_ON);
+            webView.loadUrl("http://192.168.0.1:8080/?action=stream");
+//            Log.d("apqx","start");
+        }
+
+        @Override
+        public void stop() {
+            //关闭摄像头
+            sendText(RaspberryAction.CAMERA_OFF);
+            webView.stopLoading();
+//            Log.d("apqx","stop");
+        }
+
+        @Override
+        public void takePicture() {
+            //拍照
+        }
+
+        @Override
+        public void refresh() {
+            //刷新
+            webView.reload();
+//            Log.d("apqx","refresh");
+        }
+    }
+    class HandControllerListener implements OnControllerListener{
+        @Override
+        public void up() {
+            //向上
+            sendText(RaspberryAction.SERVO_DS3218_CW);
+//            Log.d("apqx","hand up");
+        }
+
+        @Override
+        public void down() {
+            //向下
+            sendText(RaspberryAction.SERVO_DS3218_CCW);
+//            Log.d("apqx","hand down");
+        }
+
+        @Override
+        public void right() {
+            //夹紧
+            sendText(RaspberryAction.SERVO_MG995_HAND_CCW);
+//            Log.d("apqx","hand tight");
+        }
+
+        @Override
+        public void left() {
+            //松开
+            sendText(RaspberryAction.SERVO_MG995_HAND_CW);
+//            Log.d("apqx","hand unTight");
+        }
+
+        @Override
+        public void stop() {
+            //停止
+            sendText(RaspberryAction.SERVO_DS3218_STOP);
+            sendText(RaspberryAction.SERVO_MG995_HAND_STOP);
+//            Log.d("apqx","hand stop");
+        }
+    }
+    class ServoListener implements ServoViewListener{
+        @Override
+        public void up() {
+            sendText(RaspberryAction.SERVO_MG995_CAMERA_CW);
+//            Log.d("apqx","camera up");
+        }
+
+        @Override
+        public void down() {
+            sendText(RaspberryAction.SERVO_MG995_CAMERA_CCW);
+//            Log.d("apqx","camera down");
+        }
+
+        @Override
+        public void stop() {
+            sendText(RaspberryAction.SERVO_MG995_CAMERA_STOP);
+//            Log.d("apqx","camera stop");
+        }
+    }
+
     //支持手柄按键
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -298,25 +410,25 @@ public class MainActivity extends Activity implements View.OnClickListener{
             case KeyEvent.KEYCODE_W:
             case KeyEvent.KEYCODE_DPAD_UP:
                 //左摇杆上
-                controllerView.setUp();
+                directionControllerView.setUp();
                 upIsOn=true;
                 break;
             case KeyEvent.KEYCODE_S:
             case KeyEvent.KEYCODE_DPAD_DOWN:
                 //左摇杆下
-                controllerView.setDown();
+                directionControllerView.setDown();
                 downIsOn=true;
                 break;
             case KeyEvent.KEYCODE_D:
             case KeyEvent.KEYCODE_DPAD_RIGHT:
                 //左摇杆右
-                controllerView.setRight();
+                directionControllerView.setRight();
                 rightIsOn=true;
                 break;
             case KeyEvent.KEYCODE_A:
             case KeyEvent.KEYCODE_DPAD_LEFT:
                 //左摇杆左
-                controllerView.setLeft();
+                directionControllerView.setLeft();
                 leftIsOn=true;
                 break;
             case KeyEvent.KEYCODE_K:
@@ -354,7 +466,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        controllerView.setCenter();
+        directionControllerView.setCenter();
         switch (keyCode) {
             case KeyEvent.KEYCODE_W:
             case KeyEvent.KEYCODE_DPAD_UP:
@@ -386,16 +498,16 @@ public class MainActivity extends Activity implements View.OnClickListener{
     //解决按键冲突
     private void checkAndDo(){
         if (upIsOn){
-            controllerView.setUp();
+            directionControllerView.setUp();
         }
         if (downIsOn){
-            controllerView.setDown();
+            directionControllerView.setDown();
         }
         if (rightIsOn){
-            controllerView.setRight();
+            directionControllerView.setRight();
         }
         if (leftIsOn){
-            controllerView.setLeft();
+            directionControllerView.setLeft();
         }
     }
 }

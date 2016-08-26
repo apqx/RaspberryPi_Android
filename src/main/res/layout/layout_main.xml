@@ -2,11 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
+    <me.apqx.raspberrypi.view.MyWebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="203dp" />
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="40dp"
-        android:layout_marginRight="40dp"
         android:focusable="true"
         android:focusableInTouchMode="true">
         <EditText
@@ -91,7 +93,7 @@
         android:contentDescription="@string/connect_state"
         android:id="@+id/imageView"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="10dp"
         android:background="@color/disConnect"/>
     <ToggleButton
         android:id="@+id/toggleSensor"
@@ -104,15 +106,24 @@
     <TextView
         android:id="@+id/sensorData"
         android:layout_width="match_parent"
-        android:layout_height="70dp" />
+        android:layout_height="40dp" />
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:gravity="center">
         <me.apqx.raspberrypi.view.ControllerView
-            android:layout_weight="1"
-            android:id="@+id/controllerView"
-            android:layout_width="250dp"
-            android:layout_height="250dp"/>
+            android:layout_weight="4"
+            android:id="@+id/handControllerView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <me.apqx.raspberrypi.view.ServoView
+            android:id="@+id/servoView"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent" />
+        <me.apqx.raspberrypi.view.ControllerView
+            android:layout_weight="4"
+            android:id="@+id/drectionControllerView"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"/>
     </LinearLayout>
 </LinearLayout>

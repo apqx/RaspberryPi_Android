@@ -1,8 +1,11 @@
 package me.apqx.raspberrypi;
 
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -16,15 +19,25 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.Calendar;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import me.apqx.raspberrypi.util.MyVibrator;
+import me.apqx.raspberrypi.util.Util;
 import me.apqx.raspberrypi.view.ControllerView;
 import me.apqx.raspberrypi.view.MyWebView;
 import me.apqx.raspberrypi.view.MyWebViewListener;
@@ -61,6 +74,19 @@ public class MainActivity extends Activity implements View.OnClickListener{
     private BufferedReader bufferedReader;
     private Socket socket;
     private IPSQLite ipsqLite;
+    //建立用于传输数据的连接
+    private ServerSocket serverSocket;
+    private Socket fileSocket;
+    private InputStream inputStream;
+    private FileOutputStream fileOutputStream;
+    private String ip;
+    private MyVibrator myVibrator;
+    //照片输出
+    private File fileDir;
+    private File filePicture;
+    //传输文件的长度
+    private long fileLength;
+    private Matcher matcher;
     private boolean upIsOn;
     private boolean downIsOn;
     private boolean leftIsOn;
@@ -71,6 +97,9 @@ public class MainActivity extends Activity implements View.OnClickListener{
         setContentView(R.layout.layout_main);
         inite();
         setListener();
+        requestPermission();
+        //监听1336端口以传输数据
+        connectRaspberry();
     }
     private void inite(){
         connect=(Button)findViewById(R.id.connect);
@@ -88,9 +117,6 @@ public class MainActivity extends Activity implements View.OnClickListener{
         directionControllerListener=new DirectionControllerListener();
         useSensor=new UseSensor(directionControllerView);
         webView=(MyWebView)findViewById(R.id.webView);
-//        webSettings.setSupportZoom(true);
-//        webSettings.setLoadWithOverviewMode(true);
-//        webSettings.setUseWideViewPort(true);
         //缩放百分之四百,和输出视频尺寸相配合使之占满屏幕
         webView.setInitialScale(400);
         webViewListener=new WebViewListener();
@@ -98,6 +124,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
         servoViewListener=new ServoListener();
         handControllerView=(ControllerView)findViewById(R.id.handControllerView);
         handControllerListener=new HandControllerListener();
+        myVibrator=new MyVibrator(this);
         int[] ip=ipsqLite.getIP();
         ip1.setText(ip[0]+"");
         ip2.setText(ip[1]+"");
@@ -167,6 +194,38 @@ public class MainActivity extends Activity implements View.OnClickListener{
                             case RaspberryAction.CHECK_BACK:
                                 check=true;
                                 break;
+                            case RaspberryAction.SEND_PICTURE:
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(MainActivity.this,"Start translate picture",Toast.LENGTH_SHORT).show();
+                                        myVibrator.doVibrator();
+                                    }
+                                });
+                                break;
+                            case RaspberryAction.CONNECT_ANDROID_FAILED:
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(MainActivity.this,"RaspberryPi Connect Failed",Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                                break;
+                            case RaspberryAction.TAKE_PICTURE:
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(MainActivity.this,"Taking picture",Toast.LENGTH_SHORT).show();
+                                        myVibrator.doVibrator();
+                                    }
+                                });
+                                break;
+                            default:
+                                matcher=Pattern.compile("length\\+(\\S+)").matcher(string);
+                                if (matcher.matches()){
+                                    fileLength=Long.parseLong(matcher.group(1));
+                                }
+                                break;
                         }
                     }
                 }catch (IOException e){
@@ -187,7 +246,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
             printStream.println(string);
         }else {
             imageView.setBackgroundColor(Color.RED);
-            //Toast.makeText(this,"No Connection",Toast.LENGTH_SHORT).show();
+//            Toast.makeText(this,"No Connection",Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -196,6 +255,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
         if (checkThread!=null){
             checkThread.interrupt();
         }
+        closeConnectRaspberry();
         if (socket!=null){
             try {
                 //延时0.1秒，防止命令未发送完成就关闭了连接
@@ -212,7 +272,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (socket!=null){
+        if (socket!=null&&!socket.isClosed()){
             try {
                 printStream.close();
                 bufferedReader.close();
@@ -221,6 +281,12 @@ public class MainActivity extends Activity implements View.OnClickListener{
                 e.printStackTrace();
             }
         }
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        closeConnectRaspberry();
         ipsqLite.close();
     }
     //检查连接是否中断
@@ -236,46 +302,31 @@ public class MainActivity extends Activity implements View.OnClickListener{
                         check=false;
                         sendText(RaspberryAction.CHECK);
                         time=Calendar.getInstance().get(Calendar.SECOND);
-                        //Log.d("apqx","心跳");
+//                        Log.d("apqx","心跳");
                         while (!check){
                             currentTime=Calendar.getInstance().get(Calendar.SECOND);
-                            if (isOverTime(time,currentTime)){
+                            if (Util.isOverTime(time,currentTime,2)){
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
                                         close();
                                     }
                                 });
-                                //Log.d("apqx","心跳线程退出");
+//                                Log.d("apqx","心跳线程退出");
                                 return;
                             }
                         }
-                        //Log.d("apqx","sleep");
+//                        Log.d("apqx","sleep");
                         Thread.currentThread().sleep(5000);
                     }
                 }catch (Exception e){
                     e.printStackTrace();
-                    //Log.d("apqx","checkThread异常");
+//                    Log.d("apqx","checkThread异常");
                 }
             }
         },"Thread-checkConnection").start();
     }
-    //判断时间是否大于2秒
-    private boolean isOverTime(int time1,int time2){
-        if (time2>=time1&&time2<60){
-            if ((time2-time1)<2){
-                return false;
-            }else {
-                return true;
-            }
-        }else {
-            if ((time2+60-time1)<2){
-                return false;
-            }else {
-                return true;
-            }
-        }
-    }
+
     class DirectionControllerListener implements OnControllerListener{
         @Override
         public void up() {
@@ -322,6 +373,14 @@ public class MainActivity extends Activity implements View.OnClickListener{
         @Override
         public void takePicture() {
             //拍照
+            try {
+                ip=Util.getHostAddress(MainActivity.this);
+                sendText("ip+"+ip);
+                sendText(RaspberryAction.TAKE_PICTURE);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            //手机监听1336端口，每次拍照时树莓派连接手机，照片传输完成后断开连接并回收资源，手机持续监听该端口
         }
 
         @Override
@@ -508,6 +567,87 @@ public class MainActivity extends Activity implements View.OnClickListener{
         }
         if (leftIsOn){
             directionControllerView.setLeft();
+        }
+    }
+    //创建一个ServerSocket用于和树莓派传递数据
+    private void connectRaspberry(){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    serverSocket=new ServerSocket(1336);
+                    while (true){
+                        fileSocket=serverSocket.accept();
+                        inputStream=fileSocket.getInputStream();
+                        initFile();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        },"Thread-ConnectAndroid").start();
+    }
+    //关闭用于用于和树梅派传输数据的连接
+    private void closeConnectRaspberry(){
+        if (fileSocket!=null&&!fileSocket.isClosed()){
+            try {
+                inputStream.close();
+                fileOutputStream.close();
+                fileSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    //初始化数据并输出File
+    private void initFile(){
+        if (ContextCompat.checkSelfPermission(this,"android.permission.WRITE_EXTERNAL_STORAGE")==PackageManager.PERMISSION_GRANTED){
+            fileDir=new File("/sdcard/RaspberryPi/Picture");
+            if (!fileDir.exists()){
+                fileDir.mkdirs();
+            }
+            String name=getPictureName();
+            filePicture=new File(fileDir,name);
+            try{
+                fileOutputStream=new FileOutputStream(filePicture);
+                byte[] temp=new byte[1024];
+                int length;
+                long tempLength=0;
+                while ((length=inputStream.read(temp))!=-1){
+                    fileOutputStream.write(temp,0,length);
+                    tempLength=tempLength+length;
+//                    Log.d("apqx","fileLength="+fileLength);
+//                    Log.d("apqx","tempLength="+tempLength);
+
+                    if (tempLength==fileLength){
+                        break;
+                    }
+                }
+//                Log.d("apqx","SEND_PICTURE_OVER");
+                fileLength=0;
+                sendText(RaspberryAction.SEND_PICTURE_OVER);
+                closeConnectRaspberry();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this,"Picture saved",Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+
+    }
+    //获取时间作为照片文件名
+    private String getPictureName(){
+        Calendar calendar=Calendar.getInstance();
+        String string=calendar.get(Calendar.YEAR)+"-"+calendar.get(Calendar.MONTH)+"-"+calendar.get(Calendar.DAY_OF_MONTH)+"-"+calendar.get(Calendar.HOUR_OF_DAY)+"-"+calendar.get(Calendar.MINUTE)+"-"+calendar.get(Calendar.SECOND)+".jpg";
+        return string;
+    }
+    private void requestPermission(){
+        if (ContextCompat.checkSelfPermission(this,"android.permission.WRITE_EXTERNAL_STORAGE")==PackageManager.PERMISSION_DENIED||ContextCompat.checkSelfPermission(this,"android.permission.READ_EXTERNAL_STORAGE")==PackageManager.PERMISSION_DENIED){
+            ActivityCompat.requestPermissions(this,new String[]{"android.permission.WRITE_EXTERNAL_STORAGE","android.permission.READ_EXTERNAL_STORAGE"},1);
         }
     }
 }

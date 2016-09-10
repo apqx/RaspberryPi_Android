@@ -9,8 +9,6 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -19,7 +17,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -30,8 +27,6 @@ import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URI;
-import java.net.UnknownHostException;
 import java.util.Calendar;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,8 +37,6 @@ import me.apqx.raspberrypi.view.ControllerView;
 import me.apqx.raspberrypi.view.MyWebView;
 import me.apqx.raspberrypi.view.MyWebViewListener;
 import me.apqx.raspberrypi.view.OnControllerListener;
-import me.apqx.raspberrypi.view.ServoView;
-import me.apqx.raspberrypi.view.ServoViewListener;
 
 /**树莓派控制主类
  * Created by chang on 2016/6/30.
@@ -51,8 +44,6 @@ import me.apqx.raspberrypi.view.ServoViewListener;
 public class MainActivity extends Activity implements View.OnClickListener{
     private ControllerView handControllerView;
     private OnControllerListener handControllerListener;
-    private ServoView servoView;
-    private ServoViewListener servoViewListener;
     private MyWebView webView;
     private WebViewListener webViewListener;
     private boolean check;
@@ -61,7 +52,6 @@ public class MainActivity extends Activity implements View.OnClickListener{
     protected OnControllerListener directionControllerListener;
     private UseSensor useSensor;
     private ToggleButton toggleSensor;
-    protected TextView sensorData;
     private Button connect;
     private Button disConnect;
     private Button shutdown;
@@ -113,15 +103,12 @@ public class MainActivity extends Activity implements View.OnClickListener{
         imageView=(ImageView)findViewById(R.id.imageView);
         directionControllerView=(ControllerView)findViewById(R.id.drectionControllerView);
         toggleSensor=(ToggleButton)findViewById(R.id.toggleSensor);
-        sensorData=(TextView)findViewById(R.id.sensorData);
         directionControllerListener=new DirectionControllerListener();
         useSensor=new UseSensor(directionControllerView);
         webView=(MyWebView)findViewById(R.id.webView);
         //缩放百分之四百,和输出视频尺寸相配合使之占满屏幕
         webView.setInitialScale(400);
         webViewListener=new WebViewListener();
-        servoView=(ServoView)findViewById(R.id.servoView);
-        servoViewListener=new ServoListener();
         handControllerView=(ControllerView)findViewById(R.id.handControllerView);
         handControllerListener=new HandControllerListener();
         myVibrator=new MyVibrator(this);
@@ -141,13 +128,12 @@ public class MainActivity extends Activity implements View.OnClickListener{
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked){
-                    useSensor.start(sensorData);
+                    useSensor.start();
                 }else {
                     useSensor.stop();
                 }
             }
         });
-        servoView.setServoViewListener(servoViewListener);
         handControllerView.setOnControllerListener(handControllerListener);
     }
 
@@ -245,7 +231,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
         if (socket!=null&&socket.isConnected()){
             printStream.println(string);
         }else {
-            imageView.setBackgroundColor(Color.RED);
+            imageView.setBackgroundColor(getResources().getColor(R.color.disConnect));
 //            Toast.makeText(this,"No Connection",Toast.LENGTH_SHORT).show();
         }
     }
@@ -373,6 +359,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
         @Override
         public void takePicture() {
             //拍照
+//            Log.d("apqx","picture");
             try {
                 ip=Util.getHostAddress(MainActivity.this);
                 sendText("ip+"+ip);
@@ -388,6 +375,21 @@ public class MainActivity extends Activity implements View.OnClickListener{
             //刷新
             webView.reload();
 //            Log.d("apqx","refresh");
+        }
+
+        @Override
+        public void move(int offsetX, int offsetY) {
+            if (offsetX>=0){
+//                Log.d("apqx","right");
+            }else {
+//                Log.d("apqx","left");
+            }
+            if (offsetY>=0){
+//                Log.d("apqx","down");
+            }else {
+//                Log.d("apqx","up");
+            }
+
         }
     }
     class HandControllerListener implements OnControllerListener{
@@ -425,25 +427,6 @@ public class MainActivity extends Activity implements View.OnClickListener{
             sendText(RaspberryAction.SERVO_DS3218_STOP);
             sendText(RaspberryAction.SERVO_MG995_HAND_STOP);
 //            Log.d("apqx","hand stop");
-        }
-    }
-    class ServoListener implements ServoViewListener{
-        @Override
-        public void up() {
-            sendText(RaspberryAction.SERVO_MG995_CAMERA_CW);
-//            Log.d("apqx","camera up");
-        }
-
-        @Override
-        public void down() {
-            sendText(RaspberryAction.SERVO_MG995_CAMERA_CCW);
-//            Log.d("apqx","camera down");
-        }
-
-        @Override
-        public void stop() {
-            sendText(RaspberryAction.SERVO_MG995_CAMERA_STOP);
-//            Log.d("apqx","camera stop");
         }
     }
 

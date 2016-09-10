@@ -3,7 +3,8 @@
     <color name="colorPrimary">#2ecc71</color>
     <color name="colorPrimaryDark">#27ae60</color>
     <color name="colorAccent">#FF4081</color>
-    <color name="disConnect">#ff0000</color>
-    <color name="connect">#00ff00</color>
-    <color name="actionBarText">#ffffff</color>
+    <color name="disConnect">#e67e22</color>
+    <color name="connect">#3498db</color>
+    <color name="white">#ffffff</color>
+    <color name="container">#ffffff</color>
 </resources>

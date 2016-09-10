@@ -8,4 +8,5 @@ public interface MyWebViewListener {
     void stop();
     void takePicture();
     void refresh();
+    void move(int offsetX,int offsetY);
 }

@@ -45,4 +45,8 @@ public class Util {
                 ((i >> 16 ) & 0xFF) + "." +
                 ( i >> 24 & 0xFF) ;
     }
+    //获取两点间的距离
+    public static double getDistance(int startX,int startY,int endX,int endY){
+        return Math.hypot(endX-startX,endY-startY);
+    }
 }

@@ -34,8 +34,7 @@ public class UseSensor {
     public UseSensor(ControllerView controllerView){
         this.controllerView=controllerView;
     }
-    public void start(final TextView textView){
-        this.textView=textView;
+    public void start(){
         sensorManager=(SensorManager)MyApplication.getContext().getSystemService(Context.SENSOR_SERVICE);
         sensor=sensorManager.getDefaultSensor(SensorManager.SENSOR_ACCELEROMETER);
         listener=new SensorListener();

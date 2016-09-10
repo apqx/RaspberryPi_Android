@@ -9,6 +9,8 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import me.apqx.raspberrypi.util.Util;
+
 /**为控制树莓派而写的自定义View，支持点击和滑动
  * Created by chang on 2016/8/19.
  */
@@ -183,10 +185,7 @@ public class ControllerView extends View {
         }
         return true;
     }
-    //获取两点间的距离
-    private double getDistance(int startX,int startY,int endX,int endY){
-        return Math.hypot(endX-startX,endY-startY);
-    }
+
     //获取点与圆心连线与横轴的夹角
     private double getAngle(double centerX,double centerY,double startX,double startY){
         return Math.atan((startY-centerY)/(startX-centerX));
@@ -298,7 +297,7 @@ public class ControllerView extends View {
     //对外提供模拟设置触摸点方法
     public void setPoint(int setX,int setY){
         isInit=false;
-        if (getDistance(centerX,centerY,setX,setY)<=centerLength){
+        if (Util.getDistance(centerX,centerY,setX,setY)<=centerLength){
             //如果点在圈内，控制圆应随手指移动
             x=setX;
             y=setY;

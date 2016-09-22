@@ -79,7 +79,7 @@ public class MyWebView extends WebView {
         width=getMeasuredWidth();
         height=getMeasuredHeight();
         picRadius=height/10;
-        picTouchRadius=4*picRadius;
+        picTouchRadius=2*picRadius;
         picX=width/2;
         picY=height-picRadius;
         radius=(int)Math.hypot(width,height);
@@ -142,13 +142,13 @@ public class MyWebView extends WebView {
 //                    Log.d("apqx","refresh");
                     //长按为拍照
                     downTime=Calendar.getInstance().get(Calendar.SECOND);
-                    //在手指没有抬起的时候，判断按下是否超过了1秒
+                    //在手指没有抬起的时候，判断按下是否超过了2秒
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
                             while (down){
                                 upTime=Calendar.getInstance().get(Calendar.SECOND);
-                                if (Util.isOverTime(downTime,upTime,1)){
+                                if (Util.isOverTime(downTime,upTime,2)){
                                     if (listener!=null){
                                         listener.takePicture();
                                     }

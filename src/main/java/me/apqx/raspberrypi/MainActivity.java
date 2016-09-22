@@ -81,6 +81,8 @@ public class MainActivity extends Activity implements View.OnClickListener{
     private boolean downIsOn;
     private boolean leftIsOn;
     private boolean rightIsOn;
+    //判断是否已经连接
+    private boolean isConnected;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -141,8 +143,12 @@ public class MainActivity extends Activity implements View.OnClickListener{
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.connect:
-                startCommunicate();
-                ipsqLite.saveIP(new int[]{Integer.parseInt(ip1.getText().toString()),Integer.parseInt(ip2.getText().toString()),Integer.parseInt(ip3.getText().toString()),Integer.parseInt(ip4.getText().toString())});
+                if (!isConnected){
+                    startCommunicate();
+                    ipsqLite.saveIP(new int[]{Integer.parseInt(ip1.getText().toString()),Integer.parseInt(ip2.getText().toString()),Integer.parseInt(ip3.getText().toString()),Integer.parseInt(ip4.getText().toString())});
+                }else {
+                    Toast.makeText(this,"You have already connected",Toast.LENGTH_SHORT).show();
+                }
                 break;
             case R.id.disConnect:
                 sendText(RaspberryAction.EXIT);
@@ -161,6 +167,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
                 try {
                     String ip=ip1.getText()+"."+ip2.getText()+"."+ip3.getText()+"."+ip4.getText();
                     socket=new Socket(InetAddress.getByName(ip),1335);
+                    isConnected=true;
                     printStream=new PrintStream(socket.getOutputStream());
                     bufferedReader=new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     runOnUiThread(new Runnable() {
@@ -237,6 +244,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
     }
 
     private void close(){
+        isConnected=false;
         imageView.setBackgroundColor(getResources().getColor(R.color.disConnect));
         if (checkThread!=null){
             checkThread.interrupt();
@@ -298,7 +306,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
                                         close();
                                     }
                                 });
-//                                Log.d("apqx","心跳线程退出");
+                                Log.d("apqx","心跳检测成功");
                                 return;
                             }
                         }
@@ -381,13 +389,17 @@ public class MainActivity extends Activity implements View.OnClickListener{
         public void move(int offsetX, int offsetY) {
             if (offsetX>=0){
 //                Log.d("apqx","right");
+                sendText(RaspberryAction.SERVO_SG90_HORIZONTAL_CW);
             }else {
 //                Log.d("apqx","left");
+                sendText(RaspberryAction.SERVO_SG90_HORIZONTAL_CCW);
             }
             if (offsetY>=0){
 //                Log.d("apqx","down");
+                sendText(RaspberryAction.SERVO_SG90_VERTICAL_CW);
             }else {
 //                Log.d("apqx","up");
+                sendText(RaspberryAction.SERVO_SG90_VERTICAL_CCW);
             }
 
         }

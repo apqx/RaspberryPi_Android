@@ -2,8 +2,8 @@ package me.apqx.raspberrypi;
 
 import android.app.Activity;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -86,6 +86,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectAll().build());
         setContentView(R.layout.layout_main);
         inite();
         setListener();
@@ -234,7 +235,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
         },"Thread-startCommunicate").start();
 
     }
-    protected void sendText(String string){
+    protected void sendText(final String string){
         if (socket!=null&&socket.isConnected()){
             printStream.println(string);
         }else {
@@ -645,4 +646,5 @@ public class MainActivity extends Activity implements View.OnClickListener{
             ActivityCompat.requestPermissions(this,new String[]{"android.permission.WRITE_EXTERNAL_STORAGE","android.permission.READ_EXTERNAL_STORAGE"},1);
         }
     }
+
 }

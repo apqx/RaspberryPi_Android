@@ -30,7 +30,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/point"/>
+                android:content="@string/point"/>
             <EditText
                 android:id="@+id/ip_2"
                 android:hint="@string/ip"
@@ -44,7 +44,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/point"/>
+                android:content="@string/point"/>
             <EditText
                 android:id="@+id/ip_3"
                 android:hint="@string/ip"
@@ -58,7 +58,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/point"/>
+                android:content="@string/point"/>
             <EditText
                 android:id="@+id/ip_4"
                 android:hint="@string/ip"
@@ -80,21 +80,21 @@
                 android:id="@+id/connect"
                 android:layout_width="100dp"
                 android:layout_height="wrap_content"
-                android:text="@string/connect"
+                android:content="@string/connect"
                 android:layout_weight="1"/>
             <Button
                 style="?android:attr/button"
                 android:id="@+id/shutdown"
                 android:layout_width="100dp"
                 android:layout_height="wrap_content"
-                android:text="@string/shutdown"
+                android:content="@string/shutdown"
                 android:layout_weight="1"/>
             <Button
                 style="?android:attr/button"
                 android:id="@+id/disConnect"
                 android:layout_width="100dp"
                 android:layout_height="wrap_content"
-                android:text="@string/disconnect"
+                android:content="@string/disconnect"
                 android:layout_weight="1"/>
         </LinearLayout>
         <ImageView

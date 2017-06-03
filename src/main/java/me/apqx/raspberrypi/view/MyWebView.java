@@ -59,18 +59,25 @@ public class MyWebView extends WebView {
     private MyWebViewListener listener;
     public MyWebView(Context context) {
         super(context);
+        init();
     }
 
     public MyWebView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public MyWebView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init();
     }
 
     public MyWebView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+        init();
+    }
+    private void init(){
+        foreground=new Paint();
     }
 
     @Override
@@ -83,7 +90,6 @@ public class MyWebView extends WebView {
         picX=width/2;
         picY=height-picRadius;
         radius=(int)Math.hypot(width,height);
-        foreground=new Paint();
         foreground.setStyle(Paint.Style.FILL);
         foreground.setColor(Color.parseColor("#2ecc71"));
         if (tempR<radius){

@@ -11,6 +11,7 @@ import android.webkit.WebView;
 
 import java.util.Calendar;
 
+import me.apqx.raspberrypi.R;
 import me.apqx.raspberrypi.util.Util;
 
 
@@ -91,7 +92,7 @@ public class MyWebView extends WebView {
         picY=height-picRadius;
         radius=(int)Math.hypot(width,height);
         foreground.setStyle(Paint.Style.FILL);
-        foreground.setColor(Color.parseColor("#2ecc71"));
+        foreground.setColor(getResources().getColor(R.color.colorPrimary));
         if (tempR<radius){
             //如果没有开始，绘制绿色前景
             canvas.drawRect(0,0,width,height,foreground);
